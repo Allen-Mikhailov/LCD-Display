@@ -45,19 +45,18 @@ byte customChar[CHAR_HEIGHT];
 
 byte screen[BUFFER_SIZE];
 
-byte offsetMasks[8]  = {B00011111, B00111110, B01111100, B11111000, B11110000, B11100000, B11000000, B10000000};
-byte offset2Masks[8] = {B00000000, B00000000, B00000000, B00000000, B00000001, B00000011, B00000111, B00001111};
+byte offsetMasks[8]  = {0b00011111, 0b00111110, 0b01111100, 0b11111000, 0b11110000, 0b11100000, 0b11000000, 0b10000000};
+byte offset2Masks[8] = {0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000001, 0b00000011, 0b00000111, 0b00001111};
 
 void draw_line(byte * write_byte, int x, int y, int line) 
 {
-  byte *read_byte = screen[SCREEN_BYTE(CHAR_PIXEL_X(x), CHAR_PIXEL_Y(y, line))];
+  byte *read_byte = &screen[SCREEN_BYTE(CHAR_PIXEL_X(x), CHAR_PIXEL_Y(y, line))];
 
   int offset = SCREEN_OFFSET(CHAR_PIXEL_X(x), CHAR_PIXEL_Y(y, line));
 
-  *write_byte = (offsetMasks[offset] & read_byte) >> offset;
+  *write_byte = (offsetMasks[offset] & *read_byte) >> offset;
   read_byte++;
-  *write_byte = (offset2Masks[offset] & read_byte) >> (8-offset);
-  p("LINE: "BYTE_TO_BINARY_PATTERN"\n", BYTE_TO_BINARY(*write_byte));
+  *write_byte |= (offset2Masks[offset] & *read_byte) << (8-offset);
 }
 
 void draw_char(int x, int y)
@@ -77,49 +76,44 @@ void setup() {
 
   p("LINE_WIDTH: %d\n", LINE_WIDTH);
 
-  lcd.println("Testing");
-
   delay(5000);
   Serial.println("Started");
 
   // Filling Screen
-  int i = 0;
   for (int y = 0; y < 10; y++)
   {
-    for (int x = 0; x < 10; x++)
+    for (int x = 0; x < 5; x++)
     {
-      screen[SCREEN_BYTE(x, y)] |= (B1 << SCREEN_OFFSET(x, y));
-      //  delay(50);
-      //  p("Cord %d %d %d %d %d %x\n", x, y, i, SCREEN_BYTE(x, y), SCREEN_OFFSET(x, y), (B1 << SCREEN_OFFSET(x, y)));
-       i++;
+      screen[SCREEN_BYTE(x, y)] |= (0b1 << SCREEN_OFFSET(x, y));
     }
 
   }
 
   Serial.println("Finished");
 
-  draw_char(0, 0);
 
-
-  // for (int x = 0; x < DISPLAY_WIDTH; x++)
-  // {
-  //   for (int y = 0; y < DISPLAY_HEIGHT; y++)
-  //   {
-  //     p("Cord %d %d\n", x, y);
-  //     draw_char(x, y);
-  //     // delay(100);
-  //   }
-  // }
+  for (int x = 0; x < DISPLAY_WIDTH; x++)
+  {
+    for (int y = 0; y < DISPLAY_HEIGHT; y++)
+    {
+      // p("Cord %d %d\n", x, y);
+      draw_char(x, y);
+      // delay(100);
+    }
+  }
 
   Serial.println("Finished pt2");
 
-  char chars[17];
-  chars[16] = '\0';
+  
 
   // Top row
   for (int i = 0; i < 16; i++)
-    chars[i] = 't';
-  lcd.write(chars);
+  {
+    lcd.setCursor(i, 0);
+    lcd.write(i);
+  }
+
+  
 
   // lcd.println("Testing");
 
